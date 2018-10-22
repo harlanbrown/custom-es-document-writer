@@ -13,8 +13,9 @@ import javax.ws.rs.ext.Provider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
-import com.fasterxml.jackson.core.JsonGenerator;
+import org.codehaus.jackson.JsonGenerator;
 
 @Provider
 @Produces({ JsonESDocumentWriter.MIME_TYPE })
@@ -26,18 +27,29 @@ public class CustomJsonESDocumentWriter extends JsonESDocumentWriter {
     public void writeDoc(JsonGenerator jg, DocumentModel doc, String[] schemas, Map<String, String> contextParameters,
             HttpHeaders headers) throws IOException {
 
-        log.error("hi from custom JsonESDocumentWriter");
         jg.writeStartObject();
         writeSystemProperties(jg, doc);
         writeSchemas(jg, doc, schemas);
         writeContextParameters(jg, doc, contextParameters);
-        writeCustom(jg);
+        writeCustom(jg, doc);
         jg.writeEndObject();
         jg.flush();
     }
 
-    protected void writeCustom(JsonGenerator jg) throws IOException {
-        jg.writeStringField("beep", "boop");
+
+
+
+
+
+    protected void writeCustom(JsonGenerator jg, DocumentModel doc) throws IOException {
+        if (doc.getType().equals("File")) {
+            CoreSession session = doc.getCoreSession();
+            DocumentModel parent = session.getDocument(doc.getParentRef());
+            //String parentId = session.getDocument(docModel.getParentRef()).getId();
+            String parentInfo = parent.getName() + " " + parent.getTitle();
+
+            jg.writeStringField("parentInfo", parentInfo);
+        }
     }
 
 }
